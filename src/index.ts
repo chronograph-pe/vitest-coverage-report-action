@@ -12,6 +12,7 @@ import * as github from '@actions/github';
 
 const run = async () => {
 	const {
+		addComment,
 		fileCoverageMode,
 		jsonFinalPath,
 		jsonSummaryPath,
@@ -22,7 +23,7 @@ const run = async () => {
 	} = await readOptions();
 
 	const jsonSummary = await parseVitestJsonSummary(jsonSummaryPath);
-  
+
 	let jsonSummaryCompare;
 	if(jsonSummaryComparePath) {
 		jsonSummaryCompare = await parseVitestJsonSummary(jsonSummaryComparePath);
@@ -45,22 +46,24 @@ const run = async () => {
 	summary
 		.addRaw(`<em>Generated in workflow <a href=${getWorkflowSummaryURL()}>#${github.context.runNumber}</a></em>`)
 
-	try {
-		await writeSummaryToPR({
-			summary,
-			markerPostfix: getMarkerPostfix({ name, workingDirectory })
-		});
-	} catch (error) {
-		if (error instanceof RequestError && (error.status === 404 || error.status === 403)) {
-			core.warning(
-				`Couldn't write a comment to the pull-request. Please make sure your job has the permission 'pull-request: write'.
-				 Original Error was: [${error.name}] - ${error.message}
-				`
-			)
+	if (addComment) {
+		try {
+			await writeSummaryToPR({
+				summary,
+				markerPostfix: getMarkerPostfix({ name, workingDirectory })
+			});
+		} catch (error) {
+			if (error instanceof RequestError && (error.status === 404 || error.status === 403)) {
+				core.warning(
+					`Couldn't write a comment to the pull-request. Please make sure your job has the permission 'pull-request: write'.
+					Original Error was: [${error.name}] - ${error.message}
+					`
+				)
 
-		} else {
-			// Rethrow to handle it in the catch block of the run()-call.
-			throw error;
+			} else {
+				// Rethrow to handle it in the catch block of the run()-call.
+				throw error;
+			}
 		}
 	}
 

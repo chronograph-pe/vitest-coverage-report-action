@@ -8,6 +8,8 @@ async function readOptions() {
 	// Working directory can be used to modify all default/provided paths (for monorepos, etc)
 	const workingDirectory = core.getInput('working-directory');
 
+	const addComment = core.getInput('add-comment') === 'true';
+
 	const fileCoverageModeRaw = core.getInput('file-coverage-mode'); // all/changes/none
 	const fileCoverageMode = getCoverageModeFrom(fileCoverageModeRaw);
 
@@ -26,8 +28,9 @@ async function readOptions() {
   // ViteConfig is optional, as it is only required for thresholds. If no vite config is provided, we will not include thresholds in the final report.
 	const viteConfigPath = await getViteConfigPath(workingDirectory, core.getInput("vite-config-path"));
 	const thresholds = viteConfigPath ? await parseCoverageThresholds(viteConfigPath) : {};
-	
+
 	return {
+		addComment,
 		fileCoverageMode,
 		jsonFinalPath,
 		jsonSummaryPath,
